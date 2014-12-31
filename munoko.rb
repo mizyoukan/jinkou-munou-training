@@ -5,7 +5,7 @@ require_relative 'responder'
 class Munoko
   def initialize(name)
     @name = name
-    @responder = Responder.new('What')
+    @responder = RandomResponder.new('Random')
   end
 
   def dialogue(input)
