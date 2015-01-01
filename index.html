@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet">
+<script src="http://fb.me/react-0.12.2.js"></script>
+<script src="http://fb.me/JSXTransformer-0.12.2.js"></script>
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.3.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+<title>Munoko</title>
+  <style>
+// div {
+//   border: 1px solid red;
+// }
+  </style>
+</head>
+<body>
+  <script type="text/jsx">
+
+var Canvas = React.createClass({
+  propTypes: {
+    image: React.PropTypes.string.isRequired
+  },
+  render: function() {
+    return (
+      <div></div>
+    );
+  }
+});
+
+var Dialogue = React.createClass({
+  propTypes: {
+    message: React.PropTypes.string.isRequired
+  },
+  render: function() {
+    return (
+      <span>{this.props.message}</span>
+    );
+  }
+});
+
+var Log = React.createClass({
+  propTypes: {
+    log: React.PropTypes.shape({
+      request: React.PropTypes.string.isRequired,
+      response: React.PropTypes.shape({
+        name: React.PropTypes.string.isRequired,
+        responderName: React.PropTypes.string.isRequired,
+        message: React.PropTypes.string.isRequired
+      }),
+      responderNameVisible: React.PropTypes.bool.isRequired
+    })
+  },
+  prompt: function() {
+    var p = this.props.log.response.name;
+    if (this.props.log.responderNameVisible) {
+      p += ':' + this.props.log.response.responderName;
+    }
+    return p;
+  },
+  render: function() {
+    return (
+      <div className="col-xs-12">
+        <div className="row">
+          <span>&gt; {this.props.log.request}</span>
+        </div>
+        <div className="row">
+          <span>{this.prompt}&gt; {this.props.log.response.message}</span>
+        </div>
+      </div>
+    );
+  }
+});
+
+var Logs = React.createClass({
+  render: function() {
+    var logs = this.props.logs.map(function (log) {
+      return <li><Log log={log} /></li>;
+    });
+    return (
+      <ul className="list-unstyled">{logs}</ul>
+    );
+  }
+});
+
+var TalkForm = React.createClass({
+  propTypes: {
+    onTalk: React.PropTypes.func.isRequired
+  },
+  _onTalk: function(e) {
+    e.preventDefault();
+    var message = this.refs.message.getDOMNode().value.trim();
+    if (!message) {
+      return;
+    }
+    this.refs.message.getDOMNode().value = '';
+    this.props.onTalk(message);
+  },
+  render: function() {
+    return (
+      <form  onSubmit={this._onTalk}>
+        <div className="input-group">
+          <input type="text" ref="message" className="form-control" />
+          <div className="input-group-btn">
+            <input type="submit" value="話す" className="btn btn-primary" />
+          </div>
+        </div>
+      </form>
+    );
+  }
+});
+
+var Munoko = React.createClass({
+  propTypes: {
+    url: React.PropTypes.string.isRequired
+  },
+  getInitialState: function() {
+    return {
+      image: "",
+      message: "",
+      logs: []
+    };
+  },
+  onTalk: function(message) {
+    jQuery.ajax({
+      url: this.props.url,
+      type: 'POST',
+      data: JSON.stringify({'input': message}),
+      success: function(data) {
+        var log = {
+          "request": message,
+          "response": data,
+          "responderNameVisible": true
+        };
+        this.setState({
+          message: data.message,
+          logs: this.state.logs.concat([log])
+        });
+        var logs = document.getElementById("logs");
+        logs.scrollTop = logs.scrollHeight;
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  },
+  render: function() {
+    var logsStyle = {
+      overflow: "scroll",
+      height: "300px"
+    };
+    return (
+      <div className="container">
+        <div className="row">
+          <div className="col-xs-6">
+            <div className="row">
+              <div className="col-xs-12">
+                <Canvas image={this.state.image} />
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-xs-12">
+                <Dialogue message={this.state.message} />
+              </div>
+            </div>
+          </div>
+          <div id="logs" style={logsStyle} className="col-xs-6">
+            <Logs logs={this.state.logs} />
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-xs-12">
+            <TalkForm onTalk={this.onTalk} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+});
+
+React.render(<Munoko url="//localhost:4567/dialogue" />, document.body);
+
+  </script>
+</body>
+</html>
