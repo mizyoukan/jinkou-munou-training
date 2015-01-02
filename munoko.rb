@@ -1,25 +1,35 @@
 #!/usr/bin/env ruby
 
 require_relative 'responder'
+require_relative 'dictionary'
 
 class Munoko
   def initialize(name)
     @name = name
-    @resp_what = WhatResponder.new('What')
-    @resp_random = RandomResponder.new('Random')
-    @responder = @resp_random
+
+    @dictionary = Dictionary.new
+
+    @resp_what = WhatResponder.new('What', @dictionary)
+    @resp_random = RandomResponder.new('Random', @dictionary)
+    @resp_pattern = PatternResponder.new('Pattern', @dictionary)
+    @responder = @resp_pattern
   end
 
   def dialogue(input)
-    @responder = rand(2) == 0 ? @resp_what : @resp_random
-    return @responder.response(input)
+    case rand(100)
+    when 0..59
+      @responder = @resp_pattern
+    when 60..89
+      @responder = @resp_random
+    else
+      @responder = @resp_what
+    end
+    @responder.response(input)
   end
 
   def responder_name
-    return @responder.name
+    @responder.name
   end
 
-  def name
-    return @name
-  end
+  attr_reader :name
 end
