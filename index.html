@@ -119,7 +119,8 @@ var Munoko = React.createClass({
     return {
       image: "",
       message: "",
-      logs: []
+      logs: [],
+      responderOption: false
     };
   },
   onTalk: function(message) {
@@ -131,7 +132,7 @@ var Munoko = React.createClass({
         var log = {
           "request": message,
           "response": data,
-          "responderNameVisible": true
+          "responderNameVisible": this.state.responderOption
         };
         this.setState({
           message: data.message,
@@ -144,6 +145,17 @@ var Munoko = React.createClass({
         console.error(this.props.url, status, err.toString());
       }.bind(this)
     });
+  },
+  handleChange: function(field, e) {
+    if (field == 'responderOption') {
+      this.setState({
+        logs: this.state.logs.map(function(log) {
+          log.responderNameVisible = e.target.checked;
+          return log;
+        }),
+        responderOption: e.target.checked
+      });
+    }
   },
   render: function() {
     var logsStyle = {
@@ -173,6 +185,14 @@ var Munoko = React.createClass({
           <div className="col-xs-12">
             <TalkForm onTalk={this.onTalk} />
           </div>
+        </div>
+        <div className="form-group">
+          <label className="checkbox-inline">
+            <input type="checkbox"
+              checked={this.state.responderOption}
+              onChange={this.handleChange.bind(this, 'responderOption')}
+            /> Responderを表示
+          </label>
         </div>
       </div>
     );
