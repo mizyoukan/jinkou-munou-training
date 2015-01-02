@@ -11,7 +11,7 @@ class Responder
     @dictionary = dictionary
   end
 
-  def response(input)
+  def response(input, mood)
     ""
   end
 
@@ -19,23 +19,24 @@ class Responder
 end
 
 class WhatResponder < Responder
-  def response(input)
+  def response(input, mood)
     "#{input}とは何でしょうか？"
   end
 end
 
 class RandomResponder < Responder
-  def response(input)
+  def response(input, mood)
     select_random(@dictionary.randoms)
   end
 end
 
 class PatternResponder < Responder
-  def response(input)
-    @dictionary.patterns.each do |pattern, phrases|
-      m = input.match(pattern)
-      if m
-        return select_random(phrases).gsub(/%match%/, m.to_s)
+  def response(input, mood)
+    @dictionary.patterns.each do |pattern|
+      if m = pattern.match(input)
+        resp = pattern.choice(mood)
+        next if resp.nil?
+        return resp.gsub(/%match%/, m.to_s)
       end
     end
     return select_random(@dictionary.randoms)

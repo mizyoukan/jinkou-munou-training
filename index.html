@@ -20,11 +20,11 @@
 
 var Canvas = React.createClass({
   propTypes: {
-    image: React.PropTypes.string.isRequired
+    mood: React.PropTypes.number.isRequired
   },
   render: function() {
     return (
-      <div></div>
+      <div>Mood: {this.props.mood}</div>
     );
   }
 });
@@ -117,15 +117,29 @@ var Munoko = React.createClass({
   },
   getInitialState: function() {
     return {
-      image: "",
       message: "",
       logs: [],
-      responderOption: false
+      responderOption: false,
+      mood: 0
     };
   },
-  onTalk: function(message) {
+  componentDidMount: function() {
+    var url = this.props.url + '/mood';
     jQuery.ajax({
-      url: this.props.url,
+      url: url,
+      type: 'GET',
+      success: function(data) {
+        this.setState({mood: data.mood});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(url, status, err.toString());
+      }.bind(this)
+    });
+  },
+  onTalk: function(message) {
+    var url = this.props.url + '/dialogue';
+    jQuery.ajax({
+      url: url,
       type: 'POST',
       data: JSON.stringify({'input': message}),
       success: function(data) {
@@ -136,13 +150,14 @@ var Munoko = React.createClass({
         };
         this.setState({
           message: data.message,
-          logs: this.state.logs.concat([log])
+          logs: this.state.logs.concat([log]),
+          mood: data.mood
         });
         var logs = document.getElementById("logs");
         logs.scrollTop = logs.scrollHeight;
       }.bind(this),
       error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
+        console.error(url, status, err.toString());
       }.bind(this)
     });
   },
@@ -168,7 +183,7 @@ var Munoko = React.createClass({
           <div className="col-xs-6">
             <div className="row">
               <div className="col-xs-12">
-                <Canvas image={this.state.image} />
+                <Canvas mood={this.state.mood} />
               </div>
             </div>
             <div className="row">
@@ -199,7 +214,7 @@ var Munoko = React.createClass({
   }
 });
 
-React.render(<Munoko url="//localhost:4567/dialogue" />, document.body);
+React.render(<Munoko url="//localhost:4567" />, document.body);
 
   </script>
 </body>

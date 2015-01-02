@@ -12,10 +12,7 @@ munoko = Munoko.new('Munoko')
 post '/dialogue' do
   cross_origin
   begin
-    body = request.body.read
-    print("Body: [#{body}]\n")
-    req = JSON.parse(body)
-    print("Request: [#{req}]\n")
+    req = JSON.parse(request.body.read)
     input = req["input"]
     if input
       response = munoko.dialogue(input)
@@ -23,7 +20,8 @@ post '/dialogue' do
       {
         name: munoko.name,
         responderName: munoko.responder_name,
-        message: response
+        message: response,
+        mood: munoko.mood
       }.to_json
     else
       content_type :json
@@ -32,4 +30,10 @@ post '/dialogue' do
   rescue JSON::ParserError => e
     status 500
   end
+end
+
+get '/mood' do
+  cross_origin
+  content_type :json
+  {mood: munoko.mood}.to_json
 end
