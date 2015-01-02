@@ -61,7 +61,10 @@ class Munoko
     else
       @responder = @resp_what
     end
-    @responder.response(input, @emotion.mood)
+    resp = @responder.response(input, @emotion.mood)
+
+    @dictionary.study(input)
+    resp
   end
 
   def responder_name

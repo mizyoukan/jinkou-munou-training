@@ -57,4 +57,15 @@ class Dictionary
       }
     end
   end
+
+  def study(input)
+    return if randoms.include?(input)
+    SQLite3::Database.new(@db_file) do |db|
+      db.transaction do
+        db.prepare("INSERT INTO randoms (text) VALUES (?)") do |p|
+          p.execute(input)
+        end
+      end
+    end
+  end
 end
