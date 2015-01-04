@@ -62,9 +62,20 @@ class Dictionary
     end
   end
 
+  def templates
+    SQLite3::Database.new(@db_file) do |db|
+      sql = 'SELECT noun_count, text FROM templates'
+      alist = db.execute(sql).group_by{|item| item[0] }.collect{|key, values|
+        [key.to_i, values.collect{|v| v[1] }]
+      }
+      return Hash[*alist.flatten(1)]
+    end
+  end
+
   def study(input)
     study_random(input)
     study_pattern(input)
+    study_template(input)
   end
 
   def study_random(input)
@@ -80,32 +91,46 @@ class Dictionary
 
   def study_pattern(input)
     parts = Morph::analyze(input)
-    kwds = parts.select {|part| Morph::keyword?(part) }.collect{|part|
-      Morph::keyword(part)
-    }
-    kwds.uniq!
-    puts("Keywords: #{kwds}")
+    keywords = Morph::keywords(parts).uniq
+    return if keywords.empty?
+
     ptns = patterns
-    kwds.each do |kwd|
-      ptn = ptns.find {|item| item.pattern == kwd }
-      if ptn
-        SQLite3::Database.new(@db_file) do |db|
-          db.transaction do
-            db.prepare("INSERT INTO pattern_phrases (pattern_id, phrase, need) VALUES (?, ?, ?)") do |p|
-              p.execute(ptn.id, input, 0)
+    SQLite3::Database.new(@db_file) do |db|
+      db.transaction do
+        keywords.each do |keyword|
+          ptn = ptns.find {|item| item.pattern == keyword }
+          if ptn
+            pattern_id = ptn.id
+          else
+            db.prepare("INSERT INTO patterns (pattern, modify) VALUES (?, ?)") do |p|
+              p.execute(keyword, 0)
             end
+            pattern_id = db.last_insert_row_id
+          end
+          db.prepare("INSERT INTO pattern_phrases (pattern_id, phrase, need) VALUES (?, ?, ?)") do |p|
+            p.execute(pattern_id, input, 0)
           end
         end
-      else
-        SQLite3::Database.new(@db_file) do |db|
-          db.transaction do
-            db.prepare("INSERT INTO patterns (pattern, modify) VALUES (?, ?)") do |p|
-              p.execute(kwd, 0)
-            end
-            db.prepare("INSERT INTO pattern_phrases (pattern_id, phrase, need) VALUES (?, ?, ?)") do |p|
-              p.execute(db.last_insert_row_id, input, 0)
-            end
-          end
+      end
+    end
+  end
+
+  def study_template(input)
+    parts = Morph::analyze(input)
+    keywords = Morph::keywords(parts)
+    return if keywords.empty?
+
+    template = parts.collect{|part|
+      Morph::keyword?(part) ? '%noun%' : Morph::keyword(part)
+    }.join
+
+    tmpls = templates
+    return if tmpls.key?(keywords.count) and tmpls[keywords.count].include?(template)
+
+    SQLite3::Database.new(@db_file) do |db|
+      db.transaction do
+        db.prepare('INSERT INTO templates (noun_count, text) VALUES (?, ?)') do |p|
+          p.execute(keywords.count, template)
         end
       end
     end

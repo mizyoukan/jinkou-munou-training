@@ -47,6 +47,7 @@ class Munoko
     @resp_what = WhatResponder.new('What', @dictionary)
     @resp_random = RandomResponder.new('Random', @dictionary)
     @resp_pattern = PatternResponder.new('Pattern', @dictionary)
+    @resp_template = TemplateResponder.new('Template', @dictionary)
     @responder = @resp_pattern
   end
 
@@ -54,9 +55,11 @@ class Munoko
     @emotion.update(input)
 
     case rand(100)
-    when 0..59
+    when 0..39
       @responder = @resp_pattern
-    when 60..89
+    when 40..69
+      @responder = @resp_template
+    when 70..89
       @responder = @resp_random
     else
       @responder = @resp_what

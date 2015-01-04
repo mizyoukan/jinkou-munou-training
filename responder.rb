@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
+require_relative 'dictionary'
+require_relative 'morph'
+
 def select_random(ary)
   ary[rand(ary.size)]
 end
@@ -40,5 +43,19 @@ class PatternResponder < Responder
       end
     end
     return select_random(@dictionary.randoms)
+  end
+end
+
+class TemplateResponder < Responder
+  def response(input, mood)
+    parts = Morph::analyze(input)
+    keywords = Morph::keywords(parts)
+    return select_random(@dictionary.randoms) if keywords.empty?
+
+    templates = @dictionary.templates
+    return select_random(@dictionary.randoms) unless templates.key?(keywords.count)
+
+    template = select_random(templates[keywords.count])
+    return template.gsub(/%noun%/) {keywords.shift}
   end
 end

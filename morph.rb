@@ -17,5 +17,9 @@ module Morph
     /^名詞,(一般|固有名詞|サ変接続|形容動詞語幹)/ =~ part.feature
   end
 
-  module_function :analyze, :keyword, :keyword?
+  def keywords(parts)
+    parts.select {|part| keyword?(part) }.collect{|part| keyword(part) }
+  end
+
+  module_function :analyze, :keyword, :keyword?, :keywords
 end

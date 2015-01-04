@@ -21,6 +21,11 @@ SQLite3::Database.new('munoko.db') do |db|
     phrase TEXT NOT NULL,
     need INTEGER NOT NULL DEFAULT 0
   );
+  DROP TABLE IF EXISTS templates;
+  CREATE TABLE templates (
+    noun_count INTEGER NOT NULL,
+    text TEXT NOT NULL
+  );
   SQL
   db.execute_batch(create_sqls)
 
@@ -53,6 +58,21 @@ SQLite3::Database.new('munoko.db') do |db|
             pphr.execute(db.last_insert_row_id, phrase['phrase'], phrase['need'])
           end
         end
+      end
+    end
+  end
+
+  templates = [
+    '%noun%してますか？',
+    '%noun%ですか？',
+    '%noun%は%noun%ですか？',
+    '%noun%は%noun%な%noun%'
+  ]
+  db.transaction do
+    db.prepare('INSERT INTO templates (noun_count, text) VALUES (?, ?)') do |p|
+      templates.each do |template|
+        noun_count = template.scan(/%noun%/).size
+        p.execute(noun_count, template)
       end
     end
   end
