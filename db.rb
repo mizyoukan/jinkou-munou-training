@@ -26,6 +26,12 @@ SQLite3::Database.new('munoko.db') do |db|
     noun_count INTEGER NOT NULL,
     text TEXT NOT NULL
   );
+  DROP TABLE IF EXISTS markov;
+  CREATE TABLE markov (
+    prefix1 TEXT NOT NULL,
+    prefix2 TEXT NOT NULL,
+    suffix TEXT
+  );
   SQL
   db.execute_batch(create_sqls)
 

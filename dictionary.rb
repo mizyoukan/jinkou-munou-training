@@ -3,6 +3,7 @@
 require 'sqlite3'
 
 require_relative 'morph'
+require_relative 'markov'
 
 class Pattern
   def initialize(id, pattern, phrases, modify)
@@ -37,6 +38,7 @@ end
 class Dictionary
   def initialize
     @db_file = 'munoko.db'
+    @markov = Markov.new(@db_file)
   end
 
   def randoms
@@ -76,6 +78,7 @@ class Dictionary
     study_random(input)
     study_pattern(input)
     study_template(input)
+    study_markov(input)
   end
 
   def study_random(input)
@@ -135,4 +138,10 @@ class Dictionary
       end
     end
   end
+
+  def study_markov(input)
+    @markov.add_sentence(input)
+  end
+
+  attr_reader :markov
 end

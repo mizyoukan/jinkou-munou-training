@@ -3,10 +3,7 @@
 
 require_relative 'dictionary'
 require_relative 'morph'
-
-def select_random(ary)
-  ary[rand(ary.size)]
-end
+require_relative 'utils'
 
 class Responder
   def initialize(name, dictionary)
@@ -57,5 +54,23 @@ class TemplateResponder < Responder
 
     template = select_random(templates[keywords.count])
     return template.gsub(/%noun%/) {keywords.shift}
+  end
+end
+
+class MarkovResponder < Responder
+  def response(input, mood)
+    parts = Morph::analyze(input)
+    keywords = Morph::keywords(parts)
+
+    unless keywords.empty?
+      resp = nil
+      keywords.each do |k|
+        resp = @dictionary.markov.generate(k)
+        break unless resp.nil?
+      end
+      return resp unless resp.nil?
+    end
+
+    select_random(@dictionary.randoms)
   end
 end
